@@ -32,9 +32,22 @@ class Gcode:
     def close(self):
         self.file.close()
 
-    def home(self):
-        self.file.write("G28\n")
-        self.pos = list(self.home_pos)
+    def home(self, Axis: str ="ALL"):
+        axis = axis.upper()
+    
+        if axis == "ALL":
+            selected = ("X", "Y", "Z")
+            self.file.write("G28\n")
+        else:
+            selected = tuple(axis)
+            if not selected or any(a not in "XYZ" for a in selected):
+                raise ValueError(f"Invalid axis: {axis!r}")
+            self.file.write(f"G28 {' '.join(selected)}\n")
+        
+        axis_index = {"X": 0, "Y": 1, "Z": 2}
+        for a in selected:
+            i = axis_index[a]
+            self.pos[i] = self.home_pos[i]
 
     def get_x(self) -> float:
         return self.pos[0]
@@ -67,6 +80,15 @@ class Gcode:
             out += f" T{tool_index}"
         self.file.write(out + "\n")
 
+    def wait_finish(self):
+        self.file.write("M400 \n")
+
+    def dwell(self, seconds: float = 0, milliseconds: float = 0):
+        total_ms = round(seconds * 1000 + milliseconds)
+        if total_ms <= 0:
+            raise ValueError("Dwell duration must be positive")
+        self.file.write(f"G4 P{total_ms}\n")
+    
     def wait_tool_temp(
         self, temperature: int, tool_index: int = 0, on_cool: bool = False
     ):
