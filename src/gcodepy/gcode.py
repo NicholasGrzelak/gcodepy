@@ -33,7 +33,7 @@ class Gcode:
         self.file.close()
 
     def home(self, Axis: str ="ALL"):
-        axis = axis.upper()
+        axis = Axis.upper()
     
         if axis == "ALL":
             selected = ("X", "Y", "Z")
